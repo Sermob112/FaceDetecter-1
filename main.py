@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from mtcnn.mtcnn import MTCNN
+from skimage.io import imread
 import math
 import pandas as pd
 # # Read the main image
@@ -66,8 +67,8 @@ import pandas as pd
 #     plt.show()
 #
 ##Линии симметрии
-# img_rgb = cv.imread('pic/test.jpg')
-# img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+img_rgb = cv.imread('pic/test.jpg')
+img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 test = []
 nose = []
 def draw_image_with_boxes(filename, result_list):
@@ -82,11 +83,11 @@ def draw_image_with_boxes(filename, result_list):
         # get coordinates
         x, y, width, height = result['box']
         # create the shape
-        # rect = Rectangle((x, y), width, height, fill=False, color='red')
+        rect = Rectangle((x, y), width, height, fill=False, color='red')
         # draw the box
         #draw line
         # line =  plt.plot(x, y)
-        # ax.add_patch(rect)
+        ax.add_patch(rect)
         # draw the dots
         for key, value in result['keypoints'].items():
 
@@ -108,14 +109,17 @@ def draw_image_with_boxes(filename, result_list):
     mid_x = (new_array[0] + new_array[2]) / 2
     mid_y = (new_array[1] + new_array[3]) / 2
     dist_x = math.sqrt((new_array[0] - mid_x)**2+(new_array[1] - mid_y)**2)
-    ##основная симметричная
-    l2 = ax.axline([new_nose[0], new_nose[1]], [mid_x, mid_y])
-    ##дополнительная симметричная
-    l3 = ax.axvline(new_nose[0] + dist_x)
-    l4 = ax.axvline(new_nose[0] - dist_x)
+    # ##основная симметричная
+    l2 = ax.axline([x + width/2,y + height], [mid_x, mid_y])
+    # ##дополнительная симметричная
+    # l3 = ax.axvline(new_nose[0] + dist_x)
+    # l4 = ax.axvline(new_nose[0] - dist_x)
+    l3 = ax.axline([new_array[0], new_array[1]],[x + width/2- dist_x,y + height])
+    l4 = ax.axline([new_array[2], new_array[3]], [x + width / 2 + dist_x, y + height])
+    ###prochee
     # l2 = ax.axline([new_nose[0], new_nose[1]], [mid_x, mid_y])
     # l2 = mlines.Line2D([new_nose[0], mid_x ], [new_nose[1], mid_y])
-    # ax.add_line(l)
+    ax.add_line(l)
     ax.add_line(l2)
     ax.add_line(l3)
     ax.add_line(l4)
@@ -125,13 +129,18 @@ def draw_image_with_boxes(filename, result_list):
     # show the plot
 
     plt.show()
-filename = 'pic/test.jpg'
+filename = 'pic/1.pgm'
+img_rgb = cv.imread(filename)
+img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+
 # load image from file
-pixels = plt.imread(filename)
+# pixels = plt.imread(image)
+# pip
+
 # create the detector, using default weights
 detector = MTCNN()
 # detect faces in the image
-faces = detector.detect_faces(pixels)
+faces = detector.detect_faces(img_rgb)
 # display faces on the original image
 draw_image_with_boxes(filename, faces)
 
@@ -160,12 +169,13 @@ draw_image_with_boxes(filename, faces)
 ##дополнительная линия связывающая глаза
 
 # eyes_cascade = cv.CascadeClassifier('cascade/haarcascade_eye.xml')
-# img_rgb = cv.imread('pic/matching3.jpg')
+# face_cascade = cv.CascadeClassifier('cascade/haarcascade_frontalface_default.xml')
+# img_rgb = cv.imread('pic/4.pgm')
 # img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 # plt.imshow(img_rgb[:, :, ::-1])
 # ax = plt.gca()
-# eyes = eyes_cascade.detectMultiScale(img_gray)
-#
+# eyes = eyes_cascade.detectMultiScale(img_gray,1.3,5)
+# faces = face_cascade.detectMultiScale(img_gray,1.3,5)
 # eye = eyes[:, 2]
 # container1 = []
 # for i in range(0, len(eye)):
@@ -202,13 +212,19 @@ draw_image_with_boxes(filename, faces)
 # left_eye_y = left_eye_center[1]
 # l = mlines.Line2D([right_eye_x,left_eye_x], [right_eye_y,left_eye_y])
 # ax.add_line(l)
-#
+
 # symmetry_line = cv.HoughLinesP(img_gray, 1, np.pi/180, 100)
 # for x1,y1,x2,y2 in symmetry_line[0]:
 #     cv.line(img_rgb, (x1,y1), (x2,y2), (0,255,0), 2)
 # local_lines = cv.HoughLinesP(img_gray, 1, np.pi/180, 50)
 # for x1,y1,x2,y2 in local_lines[0]:
 #     cv.line(img_rgb, (x1,y1), (x2,y2), (255,0,0), 2)
+
+# for (x, y, w, h) in faces:
+#     cv.rectangle(img_rgb, (x, y), (x+w, y+h), (255, 0, 0), 2)
+# cv.imshow('img', img_rgb)
+# cv.waitKey(0)
+# ax.add_patch(rect)
 # plt.imshow(img_rgb)
 # plt.show()
 
@@ -234,7 +250,6 @@ draw_image_with_boxes(filename, faces)
 # cv.waitKey(0)
 ## template метод
 
-from matplotlib import pyplot as plt
 # import cv2 as cv
 # import numpy as np
 # img_rgb = cv.imread('pic/test4.jpg')
