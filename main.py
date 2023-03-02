@@ -8,153 +8,102 @@ import matplotlib.lines as mlines
 from mtcnn.mtcnn import MTCNN
 import math
 import pandas as pd
-# # Read the main image
-# img_rgb = cv2.imread('pic/test.jpg')
-#
-# # Convert it to grayscale
-# img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
-#
-# # Read the template
-# template = cv2.imread('pic/matching.jpg',0)
-# w, h = template.shape[::-1]
-#
-# # Perform match operations.
-# res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
-#
-# # Specify a threshold
-# threshold = 0.5
-#
-# # Store the coordinates of matched area in a numpy array
-# loc = np.where(res >= threshold)
-#
-# # Draw a rectangle around the matched region.
-# for pt in zip(*loc[::-1]):
-#     cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0, 255, 255), 2)
-#
-# # Show the final image with the matched area.
-# cv2.imshow('Detected', img_rgb)
-# cv2.waitKey(0)
+# #############################################################################
+#template метод
+def template(temp, pic):
+    img_rgb = cv.imread(pic)
+    img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+    template = cv.imread(temp,0)
+    crop_img = template[40:95,10:80]
+    w, h = template.shape[::-1]
+    res = cv.matchTemplate(img_gray,crop_img,cv.TM_CCOEFF_NORMED)
+    threshold = 0.99
+    loc = np.where( res >= threshold)
+    for pt in zip(*loc[::-1]):
+        cv.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0,0,255), 2)
+    # cv.imwrite('res.png',img_rgb)
 
-# import cv2 as cv
-# import numpy as np
-# from matplotlib import pyplot as plt
-# img = cv.imread('pic/test.jpg',0)
-# img2 = img.copy()
-# template = cv.imread('pic/matching.jpg',0)
-# w, h = template.shape[::-1]
-# # All the 6 methods for comparison in a list
-# methods = ['cv.TM_CCOEFF', 'cv.TM_CCOEFF_NORMED', 'cv.TM_CCORR',
-#             'cv.TM_CCORR_NORMED', 'cv.TM_SQDIFF', 'cv.TM_SQDIFF_NORMED']
-# for meth in methods:
-#     img = img2.copy()
-#     method = eval(meth)
-#     # Apply template Matching
-#     res = cv.matchTemplate(img,template,method)
-#     min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
-#     # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
-#     if method in [cv.TM_SQDIFF, cv.TM_SQDIFF_NORMED]:
-#         top_left = min_loc
-#     else:
-#         top_left = max_loc
-#     bottom_right = (top_left[0] + w, top_left[1] + h)
-#     cv.rectangle(img,top_left, bottom_right, 255, 2)
-#     plt.subplot(121),plt.imshow(res,cmap = 'gray')
-#     plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
-#     plt.subplot(122),plt.imshow(img,cmap = 'gray')
-#     plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
-#     plt.suptitle(meth)
-#     plt.show()
-#
+    cv.imshow("Template", crop_img)
+    cv.imshow("img_rgb", img_rgb)
+    cv.waitKey(0)
+# template('s12/1.pgm','s12/s12_all.pbm')
+#######################################################################
+
+###метод Виолы - Джонес
+def Viola_J(filename):
+
+    face_cascade = cv.CascadeClassifier('cascade/haarcascade_frontalface_default.xml')
+    eyes_cascade = cv.CascadeClassifier('cascade/haarcascade_eye.xml')
+    smile_cascade = cv.CascadeClassifier('cascade/haarcascade_smile.xml')
+    glass_cascade = cv.CascadeClassifier('cascade/haarcascade_eye_tree_eyeglasses.xml')
+    img_rgb = cv.imread(filename)
+    img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(img_gray,1.3,5)
+    eyes = eyes_cascade.detectMultiScale(img_gray,1.3,5)
+    smile = smile_cascade.detectMultiScale(img_gray,1.3,5)
+    glass = glass_cascade.detectMultiScale(img_gray,1.3,5)
+    # for (x, y, w, h) in faces:
+    #     cv.rectangle(img_rgb, (x, y), (x+w, y+h), (255, 0, 0), 2)
+    for (ex, ey, ew, eh) in eyes:
+        cv.rectangle(img_rgb,(ex,ey),(ex+ew,ey+eh), (255,0,0),2)
+    # for (ex, ey, ew, eh) in smile:
+    #     cv.rectangle(img_rgb,(ex,ey),(ex+ew,ey+eh), (255,0,0),2)
+    # for (ex, ey, ew, eh) in glass:
+    #     cv.rectangle(img_rgb,(ex,ey),(ex+ew,ey+eh), (255,0,0),2)
+    cv.imshow('img', img_rgb)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+# Viola_J('s12/s27_all.jpg')
 ##Линии симметрии
 # img_rgb = cv.imread('pic/test.jpg')
 # img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 test = []
 nose = []
 def draw_image_with_boxes(filename, result_list):
-    # load the image
     data = plt.imread(filename)
-    # plot the image
     plt.imshow(data)
-    # get the context for drawing boxes
-    ax = plt.gca()
-    # plot each box
     for result in result_list:
-        # get coordinates
-        x, y, width, height = result['box']
-        # create the shape
-        # rect = Rectangle((x, y), width, height, fill=False, color='red')
-        # draw the box
-        #draw line
-        # line =  plt.plot(x, y)
-        # ax.add_patch(rect)
-        # draw the dots
         for key, value in result['keypoints'].items():
-
-            # create and draw dot
             if key == 'left_eye':
                 test.append(value)
             if key == 'right_eye':
                 test.append(value)
-            if key  == 'nose':
-                nose.append(value)
-
-            dot = Circle(value, radius=1, color='red')
-            ax.add_patch(dot)
+    x, y, width, height = result['box']
+    rect = Rectangle((x, y), width, height, fill=False, color='red')
     new_array = [n for tup in test for n in tup]
-    new_nose = [n for tup in nose for n in tup]
-    #горизонтальная
-    l = ax.axline([new_array[0], new_array[1]], [new_array[2], new_array[3]])
-    # l = mlines.Line2D([new_array[0], new_array[2]], [new_array[1], new_array[3]])
     mid_x = (new_array[0] + new_array[2]) / 2
     mid_y = (new_array[1] + new_array[3]) / 2
     dist_x = math.sqrt((new_array[0] - mid_x)**2+(new_array[1] - mid_y)**2)
-    ##основная симметричная
-    l2 = ax.axline([new_nose[0], new_nose[1]], [mid_x, mid_y])
-    ##дополнительная симметричная
-    l3 = ax.axvline(new_nose[0] + dist_x)
-    l4 = ax.axvline(new_nose[0] - dist_x)
+    ax = plt.gca()
+    # горизонтальная
+    l = ax.axline([new_array[0], new_array[1]], [new_array[2], new_array[3]])
+    ax.add_patch(rect)
+    # ##основная симметричная
+    l2 = ax.axline([x + width/2,y + height], [mid_x, mid_y])
+    # ##дополнительная симметричная
+    # l3 = ax.axvline(new_nose[0] + dist_x)
+    # l4 = ax.axvline(new_nose[0] - dist_x)
+    l3 = ax.axline([new_array[0], new_array[1]],[x + width/2- dist_x,y + height])
+    l4 = ax.axline([new_array[2], new_array[3]], [x + width / 2 + dist_x, y + height])
+    ###prochee
     # l2 = ax.axline([new_nose[0], new_nose[1]], [mid_x, mid_y])
     # l2 = mlines.Line2D([new_nose[0], mid_x ], [new_nose[1], mid_y])
-    # ax.add_line(l)
+    ax.add_line(l)
     ax.add_line(l2)
     ax.add_line(l3)
     ax.add_line(l4)
-
-        # l = mlines.Line2D(test[0],test[1])
-        # ax.add_line(l)
-    # show the plot
-
     plt.show()
-filename = 'pic/test.jpg'
-# load image from file
-pixels = plt.imread(filename)
-# create the detector, using default weights
-detector = MTCNN()
-# detect faces in the image
-faces = detector.detect_faces(pixels)
-# display faces on the original image
-draw_image_with_boxes(filename, faces)
+for i in range(1,8):
+    filename = f's12/{8}.pgm'
+    img_rgb = cv.imread(filename)
+    img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+    # создать детектор, используя веса по умолчанию
+    detector = MTCNN()
+    # распознать лица на изображении
+    faces = detector.detect_faces(img_rgb)
+    # отобразить лица на исходном изображении
+    draw_image_with_boxes(filename, faces)
 
-
-###метод Виолы - Джонес
-
-# face_cascade = cv.CascadeClassifier('cascade/haarcascade_frontalface_default.xml')
-# eyes_cascade = cv.CascadeClassifier('cascade/haarcascade_eye.xml')
-# smile_cascade = cv.CascadeClassifier('cascade/haarcascade_smile.xml')
-# img_rgb = cv.imread('pic/test4.jpg')
-# img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-# faces = face_cascade.detectMultiScale(img_gray,1.3,5)
-# eyes = eyes_cascade.detectMultiScale(img_gray,1.3,5)
-# smile = smile_cascade.detectMultiScale(img_gray,1.3,5)
-# for (x, y, w, h) in faces:
-#     cv.rectangle(img_rgb, (x, y), (x+w, y+h), (255, 0, 0), 2)
-# for (ex, ey, ew, eh) in eyes:
-#     cv.rectangle(img_rgb,(ex,ey),(ex+ew,ey+eh), (255,0,0),2)
-# for (ex, ey, ew, eh) in smile:
-#     cv.rectangle(img_rgb,(ex,ey),(ex+ew,ey+eh), (255,0,0),2)
-# cv.imshow('img', img_rgb)
-# cv.waitKey(0)
-# cv.destroyAllWindows()
 
 ##############################################################################################################
 ##дополнительная линия связывающая глаза
@@ -232,9 +181,8 @@ draw_image_with_boxes(filename, faces)
 # detecting_face = (img_gray,img_gray)
 # cv.imshow("img_rgb", img_rgb)
 # cv.waitKey(0)
-## template метод
 
-from matplotlib import pyplot as plt
+## template метод
 # import cv2 as cv
 # import numpy as np
 # img_rgb = cv.imread('pic/test4.jpg')
@@ -250,23 +198,6 @@ from matplotlib import pyplot as plt
 # # cv.imwrite('res.png',img_rgb)
 # cv.imshow("img_rgb", img_rgb)
 # cv.waitKey(0)
-
-## template метод
-# img_rgb = cv.imread('pic/test4.jpg')
-# img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-# template = cv.imread('pic/matching4.jpg',0)
-# w, h = template.shape[::-1]
-# res = cv.matchTemplate(img_gray,template,cv.TM_CCOEFF_NORMED)
-# threshold = 0.4
-# loc = np.where( res >= threshold)
-# for pt in zip(*loc[::-1]):
-#     cv.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0,0,255), 2)
-# cv.imwrite('res.png',img_rgb)
-# cv.imshow("img_rgb", img_rgb)
-# cv.waitKey(0)
-
-
-
 
 ##нейросеть по поиску лица
 # import cv2
