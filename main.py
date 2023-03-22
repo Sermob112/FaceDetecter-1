@@ -1,11 +1,11 @@
-import cv2 as cv
+import cv2 as cv2
 import numpy as np
 from matplotlib.patches import Rectangle
 from matplotlib.patches import Circle
 from matplotlib import pyplot as plt
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-from mtcnn.mtcnn import MTCNN
+# from mtcnn.mtcnn import MTCNN
 import math
 import pandas as pd
 import os
@@ -13,7 +13,7 @@ import os
 import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from hist import MainWindow
+# from hist import MainWindow
 import sys
 import os
 ###########################################
@@ -23,18 +23,133 @@ path = 'orl_faces'
 folders = os.listdir(path)
 etalon = []
 test = []
+result  = []
 i = 1
+######################################################################################################
+#Сравнение двух гистограмм
+
+def Hist_correl(e,t):
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
+    hist1 = cv2.calcHist([img1], [0], None, [256], [0, 256])
+    hist2 = cv2.calcHist([img2], [0], None, [256], [0, 256])
+    match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+    percentage = round((match + 1) * 50,1)
+    return percentage
+######################################################################################################
+#Сравнение двух изображений методом DCT
+
+def DCT_correl(e,t):
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
+    # применяем дискретное косинусное преобразование (DCT)
+    gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+    # применяем дискретное косинусное преобразование (DCT)
+    dct1 = cv2.dct(np.float32(gray_img1))
+    dct2 = cv2.dct(np.float32(gray_img2))
+    # вычисляем разницу между двумя DCT-преобразованиями
+    diff = dct1 - dct2
+    n = gray_img1.shape[0] * gray_img1.shape[1]
+    similarity = (np.sum(diff ** 2) / n) * 100
+    return 100 - similarity / 10000
+######################################################################################################
+#Сравнение двух изображений методом DFT
+
+def DFT_correl(e,t):
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
+    # преобразуем изображения в grayscale
+    gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+    # вычисляем быстрое преобразование Фурье (DFT)
+    dft1 = cv2.dft(np.float32(gray_img1), flags=cv2.DFT_COMPLEX_OUTPUT)
+    dft2 = cv2.dft(np.float32(gray_img2), flags=cv2.DFT_COMPLEX_OUTPUT)
+    # вычисляем разницу между двумя DFT-преобразованиями
+    diff = dft1 - dft2
+    # вычисляем процент схожести
+    n = gray_img1.shape[0] * gray_img1.shape[1]
+    similarity = (np.sum(diff ** 2) / n)
+
+    return 100 - similarity / 1000000
+######################################################################################################
+#Сравнение двух изображений по градиенту
+def Grad_correl(e,t):
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
+    # преобразуем изображения в grayscale
+    gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+    # вычисляем градиент изображений
+    grad_x1 = cv2.Sobel(gray_img1, cv2.CV_32F, 1, 0)
+    grad_y1 = cv2.Sobel(gray_img1, cv2.CV_32F, 0, 1)
+    grad_x2 = cv2.Sobel(gray_img2, cv2.CV_32F, 1, 0)
+    grad_y2 = cv2.Sobel(gray_img2, cv2.CV_32F, 0, 1)
+    grad1 = cv2.magnitude(grad_x1, grad_y1)
+    grad2 = cv2.magnitude(grad_x2, grad_y2)
+
+    # вычисляем разницу между двумя градиентами
+    diff = grad1 - grad2
+
+    # вычисляем процент схожести
+    n = gray_img1.shape[0] * gray_img1.shape[1]
+    similarity = (np.sum(diff ** 2) / n)
+
+    return 100 - similarity / 100
+######################################################################################################
+#Сравнение двух изображений по градиенту
+def Scale_correl(e,t):
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
+    # получаем размеры изображений
+    h1, w1 = img1.shape[:2]
+    h2, w2 = img2.shape[:2]
+
+    # вычисляем коэффициент масштабирования
+    if h1 > h2 or w1 > w2:
+        scale_percent = int(max(h1 / h2, w1 / w2) * 100)
+    else:
+        scale_percent = int(max(h2 / h1, w2 / w1) * 100)
+
+    # масштабируем изображения
+    scaled_img1 = cv2.resize(img1, (int(w1 * scale_percent / 100), int(h1 * scale_percent / 100)))
+    scaled_img2 = cv2.resize(img2, (int(w2 * scale_percent / 100), int(h2 * scale_percent / 100)))
+
+    # вычисляем разницу между двумя масштабированными изображениями
+    diff = scaled_img1 - scaled_img2
+
+    # вычисляем процент схожести
+    n = h1 * w1
+    similarity = (np.sum(diff ** 2) / n)
+    return 100 - similarity / 10
+
+
+#############################################################################################
+#чтение из файла и добаление в массивы эталонов и тестов
 def read_Etalon_and_test(b):
     for folder in folders:
         for i in range(b+1,11):
             test.append(f'orl_faces/{folder}/{i}.pgm')
         for j in range(1,b+1):
             etalon.append(f'orl_faces/{folder}/{j}.pgm')
-
-
 read_Etalon_and_test(2)
-print(test)
-print(etalon)
+#############################################################################################
+#Срвнение всех методов
+# read_Etalon_and_test(2)
+# for i in range(1,len(etalon) + 1):
+#     for j in range(1,len(test) + 1):
+#         result.append(Hist_correl(etalon[i],test[j]))
+
+
+####################################################
+#TEST
+print(DFT_correl(etalon[1],test[25]))
+print(DCT_correl(etalon[1],test[25]))
+print(Grad_correl(etalon[1],test[25]))
+print(Scale_correl(etalon[1],etalon[1]))
+# print(etalon)
 # for folder in folders:
 #     folder_path = os.path.join(path, folder)
 #     if os.path.isdir(folder_path):
