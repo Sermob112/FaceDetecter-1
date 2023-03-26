@@ -112,6 +112,9 @@ def Grad_correl(e,t):
 def Scale_correl(e,t):
     img1 = cv2.imread(e)
     img2 = cv2.imread(t)
+
+    scale_down = 0.2
+    img2 = cv2.resize(img2, None, fx=scale_down, fy=scale_down, interpolation=cv2.INTER_LINEAR)
     # Получение размеров изображений
     height1, width1, _ = img1.shape
     height2, width2, _ = img2.shape
@@ -137,16 +140,23 @@ def read_Etalon_and_test(b):
 def Finder():
     read_Etalon_and_test(1)
     for i in range(1,len(etalon)):
-        for j in range(1,len(test)):
-            # result.append(round(Hist_correl(etalon[i],test[j]),1))
+        for j in range(1,10):
+            result.append(round(Hist_correl(etalon[i],test[j]),1))
             result.append(round(DFT_correl(etalon[i], test[j]),1))
-            # result.append(round(DCT_correl(etalon[i], test[j]),1))
-            # result.append(round(Grad_correl(etalon[i], test[j]),1))
-            # result.append(round(Scale_correl(etalon[i], test[j]),1))
+            result.append(round(DCT_correl(etalon[i], test[j]),1))
+            result.append(round(Grad_correl(etalon[i], test[j]),1))
+            result.append(round(Scale_correl(etalon[i], test[j]),1))
     return result
 ####################################################
 #TEST
-# read_Etalon_and_test(1)
+read_Etalon_and_test(1)
+Finder()
+print(len(result))
+print(len(test))
+print(len(etalon))
+#
+# print(test)
+# print(test)
 # print(Hist_correl(etalon[1],test[1]))
 # print(DFT_correl(etalon[0],test[1]))
 # print(DCT_correl(etalon[1],test[3]))
