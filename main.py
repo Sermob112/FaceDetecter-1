@@ -14,6 +14,7 @@ import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 # from hist import MainWindow
+# from w4 import Ui_MainWindow
 import sys
 import os
 ###########################################
@@ -36,15 +37,15 @@ def Hist_correl(e,t):
     hist1 = cv2.calcHist([gray_img1], [0], None, [256], [0, 256])
     hist2 = cv2.calcHist([gray_img2], [0], None, [256], [0, 256])
     # Нормализация гистограмм
-    cv2.normalize(hist1, hist1, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(hist2, hist2, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(hist1, hist1, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(hist2, hist2, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
     # Сравнение гистограмм
     score = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
 
     match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
     percentage = round((match + 1) * 50,1)
-    return percentage
+    return 100 - (abs(score) * 100)
 ######################################################################################################
 #Сравнение двух изображений методом DCT
 
@@ -84,8 +85,8 @@ def DFT_correl(e,t):
 
     # нормализация расстояния
     max_dist = np.sqrt(img1.shape[0] * img1.shape[1] * 2) * 255
-    similarity = (1 - (dist / max_dist)) * 100
-    return  similarity
+    similarity = ((max_dist / dist)) * 100
+    return  100 -  similarity
 ######################################################################################################
 #Сравнение двух изображений по градиенту
 def Grad_correl(e,t):
@@ -137,10 +138,10 @@ def read_Etalon_and_test(b):
 
 #############################################################################################
 #Срвнение всех методов
-def Finder():
-    read_Etalon_and_test(1)
+def Finder(b):
+    read_Etalon_and_test(b)
     for i in range(1,len(etalon)):
-        for j in range(1,10):
+        for j in range(1,11 - b):
             result.append(round(Hist_correl(etalon[i],test[j]),1))
             result.append(round(DFT_correl(etalon[i], test[j]),1))
             result.append(round(DCT_correl(etalon[i], test[j]),1))
@@ -149,11 +150,11 @@ def Finder():
     return result
 ####################################################
 #TEST
-read_Etalon_and_test(1)
-Finder()
-print(len(result))
-print(len(test))
-print(len(etalon))
+# read_Etalon_and_test(1)
+# Finder(2)
+# print(len(result))
+# print(len(test))
+# print(len(etalon))
 #
 # print(test)
 # print(test)
@@ -180,8 +181,8 @@ print(len(etalon))
 # class mywindow(QtWidgets.QMainWindow):
 #     def __init__(self):
 #         super(mywindow, self).__init__()
-#         self.ui = MainWindow()
-#         # self.ui.setupUi(self)
+#         self.ui = Ui_MainWindow()
+#         self.ui.setupUi(self)
 #
 # def application():
 #     app = QApplication(sys.argv)

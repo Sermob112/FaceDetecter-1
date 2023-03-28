@@ -1,12 +1,12 @@
 import cv2 as cv
 import numpy as np
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 from matplotlib.patches import Rectangle
 from matplotlib.patches import Circle
 from matplotlib import pyplot as plt
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-from mtcnn.mtcnn import MTCNN
+# from mtcnn.mtcnn import MTCNN
 import math
 import pandas as pd
 import os
@@ -19,46 +19,63 @@ import main
 from PyQt5.QtWidgets import*
 from random import randint
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QColor, QFont
 
-
+but_stat = True
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.i = 0
         self.e = 0
-        self.step = 0
+        self.step_hist = 0
+        self.step_dft = 1
+        self.step_dct = 2
+        self.step_scl = 4
+        self.step_grad = 3
+        self.but_stat = True
+        self.b = 0
+
         self.x_data = []
         self.y_data = []
-        self.result = main.Finder()
-        # set the title of the main window
-        self.setWindowTitle("Image Histogram")
 
-        # create a central widget to hold the canvas and the button
+        self.x_data_dft = []
+        self.y_data_dft = []
+
+        self.x_data_grad = []
+        self.y_data_grad = []
+
+        self.x_data_dct = []
+        self.y_data_dct = []
+
+        self.x_data_scl = []
+        self.y_data_scl = []
+
+        self.b = QInputDialog.getText(self, 'Введите число', 'Введите количество эталонных изображений:')
+
+
+        self.result = main.Finder(int(self.b[0]))
+        self.setWindowTitle("Процент точности системы")
         central_widget = QtWidgets.QWidget(self)
-        self.setCentralWidget(central_widget)
-
-        # create a vertical box layout to hold the canvas and the button
         vertical_layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # create a canvas to display the image
-        self.canvas = FigureCanvas(Figure(figsize=(10, 5)))
+        self.canvas = FigureCanvas(Figure(figsize=(15, 15)))
         vertical_layout.addWidget(self.canvas)
-
-
-
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.load_image)
-        self.timer.start(100)  # обновление каждую секунду
-        if (self.e == 3):
-            self.timer.stop()
+        self.timer.start(100)
 
-        # create a button to load the image
-        self.button = QtWidgets.QPushButton("Показать результат")
+        self.button = QtWidgets.QPushButton("Остановить")
+        self.button2 = QtWidgets.QPushButton("test")
+        self.lable = QtWidgets.QLabel('Abyfkmysq htpekmnfn', )
+        self.lable.setAlignment(Qt.AlignHCenter )
+        self.lable.setFont(QFont('Times', 16))
+        vertical_layout.addWidget(self.lable)
         vertical_layout.addWidget(self.button)
-
-        # connect the button to the function that loads the image
-        self.button.clicked.connect(self.load_image)
+        vertical_layout.addWidget(self.button2)
+        figure = self.canvas.figure
+        figure.text(1, 1, "Надпись", color='red', ha="right", va="bottom")
+        self.setCentralWidget(central_widget)
+        self.button.clicked.connect(self.Stop)
 
     # def update_figure(self):
 
@@ -80,7 +97,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #Оригинал
         # create a subplot for the image
         #строки, стобец, место в столбце
-        ax1 = self.canvas.figure.add_subplot(341)
+        ax1 = self.canvas.figure.add_subplot(441)
 
         ax1.title.set_text('Тест')
 
@@ -88,8 +105,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         #Гистограмма
-        ax2 = self.canvas.figure.add_subplot(343)
-        ax2.title.set_text(f'Гистограмма {self.result[self.step]}% ')
+        ax2 = self.canvas.figure.add_subplot(443)
+        ax2.title.set_text(f'Гистограмма {self.result[self.step_hist]}% ')
 
         colors = ('b', 'g', 'r')
         for i, col in enumerate(colors):
@@ -110,24 +127,25 @@ class MainWindow(QtWidgets.QMainWindow):
         grad = cv.addWeighted(abs_sobelx, 0.5, abs_sobely, 0.5, 0)
 
         # Отображение изображения с градиентом
-        ax3 = self.canvas.figure.add_subplot(344)
-        ax3.title.set_text(f'Градиент {self.result[self.step + 3]}')
+        ax3 = self.canvas.figure.add_subplot(444)
+        ax3.title.set_text(f'Градиент {self.result[self.step_hist + 3]}')
         ax3.imshow(grad)
 
         ####################################################################
         # DCT
-        ax4 = self.canvas.figure.add_subplot(345)
+        ax4 = self.canvas.figure.add_subplot(445)
         imgcv1 = cv.split(img)[0]
         imf = np.float32(imgcv1) / 255.0  # float conversion/scale
         dct = cv.dct(imf)  # the dct
         imgcv1 = np.uint8(dct * 255.0)
 
         # Отображение результатов
-        ax4.title.set_text(f'DCT {self.result[self.step + 2]}')
+        # ax4.title.set_text(f'DCT {self.result[self.step_hist + 2]}')
+        ax4.set_xlabel(f'DCT {self.result[self.step_hist + 2]}')
         ax4.imshow(imgcv1)
 
 
-        ax5 = self.canvas.figure.add_subplot(346)
+        ax5 = self.canvas.figure.add_subplot(446)
         ####DFT
 
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -145,18 +163,21 @@ class MainWindow(QtWidgets.QMainWindow):
         magnitude = cv.normalize(magnitude, None, 0, 255, cv.NORM_MINMAX, cv.CV_8UC1)
 
         # Display the magnitude of the Fourier Transform
-        ax5.title.set_text(f'DFT {self.result[self.i + 1]}')
+        # ax5.title.set_text(f'DFT {self.result[self.i + 1]}')
+        ax5.set_xlabel(f'DFT {self.result[self.step_hist + 1]}')
         ax5.imshow(magnitude)
         #########################################
         #Эталон
-        ax6 = self.canvas.figure.add_subplot(342)
+        ax6 = self.canvas.figure.add_subplot(442)
         ax6.title.set_text('Эталон')
         img = cv.imread(et_path)
+
         ax6.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
         #########################################
         # SCALE
-        ax8 = self.canvas.figure.add_subplot(347)
-        ax8.title.set_text(f'SCALE {self.result[self.step + 4]}')
+        ax8 = self.canvas.figure.add_subplot(447)
+        # ax8.title.set_text(f'SCALE {self.result[self.step_hist + 4]}')
+        ax8.set_xlabel(f'SCALE {self.result[self.step_hist + 4]}')
         scale_up_x = 1.2
         scale_up_y = 1.2
         img = cv.imread(img_path)
@@ -164,16 +185,42 @@ class MainWindow(QtWidgets.QMainWindow):
         scaled_f_down = cv.resize(img, None, fx= scale_down, fy= scale_down, interpolation= cv.INTER_LINEAR)
         ax8.imshow(cv.cvtColor(scaled_f_down, cv.COLOR_BGR2RGB))
 
-        ax7 = self.canvas.figure.add_subplot(414)
-        ax7.title.set_text('График сходимости по Гистограмме')
-        self.x_data.append(self.i)
-        self.y_data.append(self.result[self.step])
-        ax7.axes.clear()
-        ax7.axes.plot(self.x_data, self.y_data)
+        ax7 = self.canvas.figure.add_subplot(313)
+        ax7.title.set_text('График определения лица по Гистограмме')
 
-        ax7.set_xlabel('Номер теста')
+        self.x_data.append(self.i)
+        self.y_data.append(self.result[self.step_hist])
+
+        self.x_data_dft.append(self.i)
+        self.y_data_dft.append(self.result[self.step_dft])
+
+        self.x_data_grad.append(self.i)
+        self.y_data_grad.append(self.result[self.step_grad])
+
+        self.x_data_dct.append(self.i)
+        self.y_data_dct.append(self.result[self.step_dct])
+
+        self.x_data_scl.append(self.i)
+        self.y_data_scl.append(self.result[self.step_scl])
+        ax7.axes.clear()
+        ax7.axes.plot(self.x_data, self.y_data,color='r', label='Hist')
+        ax7.axes.plot(self.x_data_dft, self.y_data_dft,color='b', label='DFT')
+        ax7.axes.plot(self.x_data_grad, self.y_data_grad, color='g', label='Grad')
+        ax7.axes.plot(self.x_data_dct, self.y_data_dct, color='y', label='DCT')
+        ax7.axes.plot(self.x_data_scl, self.y_data_scl, color='c', label='SCL')
+        ax7.legend()
+        ax7.set_xlabel('Номер тестового изображения')
         ax7.set_ylabel('Проценты')
 
+        # ax9 = self.canvas.figure.add_subplot(614)
+        # ax9.title.set_text('График сходимости по DFT')
+        # self.x_data_dft.append(self.i)
+        # self.y_data_dft.append(self.result[self.step_dft])
+        # ax9.axes.clear()
+        # ax9.axes.plot(self.x_data_dft, self.y_data_dft)
+        #
+        # ax9.set_xlabel('Номер тестового изображения')
+        # ax9.set_ylabel('Проценты')
         # ax1.clear()
         # ax2.clear()
         # ax3.clear()
@@ -182,12 +229,25 @@ class MainWindow(QtWidgets.QMainWindow):
         # ax6.clear()
 
         # ax7.plot(self.i,self.result[self.i])
-
-        self.i = self.i + 1
-        self.step = self.step + 5
-        if (self.i % 9 == 0):
-            self.e = self.e + 1
         self.canvas.draw()
+        self.i = self.i + 1
+        self.step_dft =self.step_dft + 5
+        self.step_hist = self.step_hist + 5
+        self.step_grad = self.step_grad + 5
+        self.step_dct= self.step_dct + 5
+        self.step_scl= self.step_scl + 5
+        if (self.i % 10 - int(self.b[0]) == 0):
+            self.e = self.e + 1
+
+
+    def Stop(self):
+        if(self.but_stat == True):
+            self.timer.stop()
+            self.but_stat = False
+        else:
+            self.timer.start(100)
+            self.but_stat = True
+
 
 
 
@@ -200,3 +260,4 @@ app = QtWidgets.QApplication([])
 window = MainWindow()
 window.show()
 app.exec_()
+
