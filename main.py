@@ -32,6 +32,11 @@ i = 1
 def Hist_correl(e,t):
     img1 = cv2.imread(e)
     img2 = cv2.imread(t)
+
+
+
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
     gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     hist1 = cv2.calcHist([gray_img1], [0], None, [256], [0, 256])
@@ -43,9 +48,9 @@ def Hist_correl(e,t):
     # Сравнение гистограмм
     score = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
 
-    # match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
-    # percentage = round((match + 1) * 50,1)
-    return (abs(score) * 100)
+    match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL) * 100
+    percentage = round((match + 1) * 50,1)
+    return match
 ######################################################################################################
 #Сравнение двух изображений методом DCT
 
@@ -205,14 +210,14 @@ def Finder(b):
 ####################################################
 #TEST
 #
-# result = Finder(1)
+result = Finder(1)
 # print(len(result)//5)
 # print(len(test))
 # print(len(etalon))
 #
 # print(test)
 # print(test)
-# print(Hist_correl(etalon[1],test[1]))
+print(Hist_correl(etalon[1],test[1]))
 # print(DFT_correl(etalon[0],test[1]))
 # print(DCT_correl(etalon[1],test[3]))
 # print(Grad_correl(etalon[1],test[155]))
