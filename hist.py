@@ -11,7 +11,7 @@ import math
 import pandas as pd
 import os
 import sys
-
+import pywt
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -38,44 +38,40 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.x_data = []
         self.y_data = []
-
-        self.x_data_dft = []
         self.y_data_dft = []
-
-        self.x_data_grad = []
         self.y_data_grad = []
-
-        self.x_data_dct = []
         self.y_data_dct = []
-
-        self.x_data_scl = []
         self.y_data_scl = []
 
+        self.avg = []
+        self.final_avg = []
         self.b = QInputDialog.getText(self, 'Введите число', 'Введите количество эталонных изображений:')
 
+        self.b = int(self.b[0])
+        self.result = main.Finder(self.b)
 
-        self.result = main.Finder(int(self.b[0]))
         self.setWindowTitle("Процент точности системы")
         central_widget = QtWidgets.QWidget(self)
-        vertical_layout = QtWidgets.QVBoxLayout(central_widget)
+        self.vertical_layout = QtWidgets.QVBoxLayout(central_widget)
         self.canvas = FigureCanvas(Figure(figsize=(15, 15)))
-        vertical_layout.addWidget(self.canvas)
+        self.vertical_layout.addWidget(self.canvas)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.load_image)
         self.timer.start(100)
-
-        self.button = QtWidgets.QPushButton("Остановить")
-        self.button2 = QtWidgets.QPushButton("test")
-        self.lable = QtWidgets.QLabel('Abyfkmysq htpekmnfn', )
-        self.lable.setAlignment(Qt.AlignHCenter )
+        self.lable = QtWidgets.QLabel(f'0')
+        self.lable.setAlignment(Qt.AlignHCenter)
         self.lable.setFont(QFont('Times', 16))
-        vertical_layout.addWidget(self.lable)
-        vertical_layout.addWidget(self.button)
-        vertical_layout.addWidget(self.button2)
+        self.vertical_layout.addWidget(self.lable)
+        self.button = QtWidgets.QPushButton("Остановить")
+        self.button2 = QtWidgets.QPushButton("Результаты")
+
+        self.vertical_layout.addWidget(self.button)
+        self.vertical_layout.addWidget(self.button2)
         figure = self.canvas.figure
         figure.text(1, 1, "Надпись", color='red', ha="right", va="bottom")
         self.setCentralWidget(central_widget)
         self.button.clicked.connect(self.Stop)
+        self.button2.clicked.connect(self.FinalResult)
 
     # def update_figure(self):
 
@@ -103,15 +99,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ax1.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
 
-
+        ####################################################################
         #Гистограмма
         ax2 = self.canvas.figure.add_subplot(443)
         ax2.title.set_text(f'Гистограмма {self.result[self.step_hist]}% ')
-
+        img2 = cv.imread(et_path)
         colors = ('b', 'g', 'r')
         for i, col in enumerate(colors):
             hist = cv.calcHist([img], [i], None, [256], [0, 256])
-            ax2.plot(hist, color=col)
+            hist2 = cv.calcHist([img2], [i], None, [256], [0, 256])
+            ax2.plot(hist, color='b')
+            ax2.plot(hist2, color='r')
             ax2.set_xlim([0, 256])
 
         ####################################################################
@@ -173,41 +171,69 @@ class MainWindow(QtWidgets.QMainWindow):
         img = cv.imread(et_path)
 
         ax6.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
-        #########################################
+
+        #########################################################################################################################
         # SCALE
         ax8 = self.canvas.figure.add_subplot(447)
         # ax8.title.set_text(f'SCALE {self.result[self.step_hist + 4]}')
         ax8.set_xlabel(f'SCALE {self.result[self.step_hist + 4]}')
-        scale_up_x = 1.2
-        scale_up_y = 1.2
-        img = cv.imread(img_path)
-        scale_down = 0.2
-        scaled_f_down = cv.resize(img, None, fx= scale_down, fy= scale_down, interpolation= cv.INTER_LINEAR)
-        ax8.imshow(cv.cvtColor(scaled_f_down, cv.COLOR_BGR2RGB))
 
+        # img = cv.imread(img_path,cv.IMREAD_GRAYSCALE)
+        img = cv.imread(img_path)
+        gray_img2 = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+        level = 3
+        # Выполнить вейвлет-преобразование над изображениями
+
+        coeffs2 = pywt.wavedec2(gray_img2, 'db2', mode='periodization', level=level)
+        # Установить порог для коэффициентов детализации
+        threshold = 80
+        # Применить низкочастотную фильтрацию
+        new_coeffs2 = list(coeffs2)
+        for i in range(1, level + 1):
+            # Применить порог над коэффициентами детализации
+
+            new_coeffs2[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs2[i]])
+        # Выполнить обратное вейвлет-преобразование
+        denoised_img1 = pywt.waverec2(new_coeffs2, 'db2', mode='periodization')
+
+
+
+
+        # # Начальный размер изображения
+        # height, width = img.shape[:2]
+        # # Конечный размер изображения
+        # new_height, new_width = int(height // 3), int(width // 3)
+        #
+        # # Установить уровень декомпозиции
+        # level = 3
+        # # Выполнить вейвлет-преобразование над изображением
+        # coeffs = pywt.wavedec2(img, 'db2', mode='periodization', level=level)
+        #
+        # # Произвести изменение размера за счет удаления
+        # # коэффициентов детализации вейвлет-преобразования на некоторых уровнях
+        # new_coeffs = list(coeffs)
+        # for i in range(1, level + 1):
+        #     new_coeffs[i] = tuple([coeffs[i][j][:new_height, :new_width] for j in range(len(coeffs[i]))])
+        # # Выполнить обратное вейвлет-преобразование
+        # resized_img = pywt.waverec2(new_coeffs, 'db2', mode='periodization')
+        ax8.imshow(denoised_img1)
+        #########################################################################################################################
         ax7 = self.canvas.figure.add_subplot(313)
         ax7.title.set_text('График определения лица по Гистограмме')
 
         self.x_data.append(self.i)
         self.y_data.append(self.result[self.step_hist])
-
-        self.x_data_dft.append(self.i)
         self.y_data_dft.append(self.result[self.step_dft])
-
-        self.x_data_grad.append(self.i)
         self.y_data_grad.append(self.result[self.step_grad])
-
-        self.x_data_dct.append(self.i)
         self.y_data_dct.append(self.result[self.step_dct])
-
-        self.x_data_scl.append(self.i)
         self.y_data_scl.append(self.result[self.step_scl])
         ax7.axes.clear()
         ax7.axes.plot(self.x_data, self.y_data,color='r', label='Hist')
-        ax7.axes.plot(self.x_data_dft, self.y_data_dft,color='b', label='DFT')
-        ax7.axes.plot(self.x_data_grad, self.y_data_grad, color='g', label='Grad')
-        ax7.axes.plot(self.x_data_dct, self.y_data_dct, color='y', label='DCT')
-        ax7.axes.plot(self.x_data_scl, self.y_data_scl, color='c', label='SCL')
+        ax7.axes.plot(self.x_data, self.y_data_dft,color='b', label='DFT')
+        ax7.axes.plot(self.x_data, self.y_data_grad, color='g', label='Grad')
+        ax7.axes.plot(self.x_data, self.y_data_dct, color='y', label='DCT')
+        ax7.axes.plot(self.x_data, self.y_data_scl, color='c', label='SCL')
         ax7.legend()
         ax7.set_xlabel('Номер тестового изображения')
         ax7.set_ylabel('Проценты')
@@ -227,6 +253,12 @@ class MainWindow(QtWidgets.QMainWindow):
         # ax4.clear()
         # ax5.clear()
         # ax6.clear()
+        self.avg.append((self.result[self.step_hist] + self.result[self.step_dft] + self.result[self.step_grad] + self.result[self.step_dct] + self.result[self.step_scl])/5)
+
+        self.lable.setText(f'текущая точность распознавания лица: {round(self.avg[self.i],1)} %')
+
+
+
 
         # ax7.plot(self.i,self.result[self.i])
         self.canvas.draw()
@@ -236,9 +268,60 @@ class MainWindow(QtWidgets.QMainWindow):
         self.step_grad = self.step_grad + 5
         self.step_dct= self.step_dct + 5
         self.step_scl= self.step_scl + 5
-        if (self.i % 10 - int(self.b[0]) == 0):
+        if (self.i % (10 - self.b) == 0):
             self.e = self.e + 1
 
+    def FinalResult(self):
+        self.lable.setText(f'Средняя точность системы распознования лиц: {round(sum(self.result)/len(self.result), 1)} %')
+        self.timer.stop()
+        self.but_stat = False
+
+        print(len(self.result))
+        data = {}
+        y_data = []
+        y_data_dft = []
+        y_data_grad = []
+        y_data_dct = []
+        y_data_scl = []
+        i_test = []
+        e_etalon = []
+        i = 0
+        e = 0
+        step_dft = 0
+        step_hist = 0
+        step_grad = 0
+        step_dct = 0
+        step_scl = 0
+
+        for i in range(len(self.result)//5 - 5):
+            y_data.append(self.result[step_hist])
+            y_data_dft.append(self.result[step_dft])
+            y_data_grad.append(self.result[step_grad])
+            y_data_dct.append(self.result[step_dct])
+            y_data_scl.append(self.result[step_scl])
+            i_test.append(i)
+            e_etalon.append(e)
+            step_dft = step_dft + 5
+            step_hist = step_hist + 5
+            step_grad = step_grad + 5
+            step_dct = step_dct + 5
+            step_scl = step_scl + 5
+            i = i + 1
+            if (i % (9 - self.b) == 0):
+                e = e + 1
+
+        data= {
+            'Гистограмма': y_data,
+            'DFT': y_data_dft,
+            'DCT': y_data_dct,
+            'Градиент': y_data_grad,
+            'Scale': y_data_scl,
+            'Номер тестового изображения': i_test,
+            'Номер Эталонного изображения': e_etalon,
+            'Средняя точность системы разпознования лиц': round(sum(self.result)/len(self.result),1)
+        }
+        df = pd.DataFrame(data)
+        df.to_excel(f'Результаты работы с {self.b} эталонами.xlsx', index=False)
 
     def Stop(self):
         if(self.but_stat == True):

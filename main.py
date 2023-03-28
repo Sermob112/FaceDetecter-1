@@ -9,7 +9,7 @@ import matplotlib.lines as mlines
 import math
 import pandas as pd
 import os
-
+import pywt
 import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
@@ -43,9 +43,9 @@ def Hist_correl(e,t):
     # Сравнение гистограмм
     score = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
 
-    match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
-    percentage = round((match + 1) * 50,1)
-    return 100 - (abs(score) * 100)
+    # match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+    # percentage = round((match + 1) * 50,1)
+    return (abs(score) * 100)
 ######################################################################################################
 #Сравнение двух изображений методом DCT
 
@@ -57,18 +57,31 @@ def DCT_correl(e,t):
     dct1 = cv2.dct(np.float32(img1))
     dct2 = cv2.dct(np.float32(img2))
     # Вычисление модуля спектра
-    mag1 = cv2.magnitude(dct1, dct1)
-    mag2 = cv2.magnitude(dct2, dct2)
+    # mag1 = cv2.magnitude(dct1, dct1)
+    # mag2 = cv2.magnitude(dct2, dct2)
+    # Вычислите
+    # коэффициент
+    # сходства
+    # двух
+    # изображений
+    # с
+    # помощью
+    # косинусного
+    # расстояния.
+    #
+    from scipy.spatial.distance import cosine
 
-    # вычисляем разницу между двумя DCT-преобразованиями
-    diff = cv2.absdiff(mag1, mag2)
-    score = np.sum(diff) / np.sum(mag1) * 100
+    similarity_score = 1 - cosine(dct1.flatten(), dct2.flatten())
 
-    # вычисление меры расстояния
-    dist = np.linalg.norm(dct1 - dct2)
-    max_dist = np.sqrt(img1.shape[0] * img1.shape[1]) * 255
-    similarity = (1 - (dist / max_dist)) * 100
-    return similarity
+    # # вычисляем разницу между двумя DCT-преобразованиями
+    # diff = cv2.absdiff(mag1, mag2)
+    # score = np.sum(diff) / np.sum(mag1) * 100
+    #
+    # # вычисление меры расстояния
+    # dist = np.linalg.norm(dct1 - dct2)
+    # max_dist = np.sqrt(img1.shape[0] * img1.shape[1]) * 255
+    # similarity = (1 - (dist / max_dist)) * 100
+    return similarity_score * 100
 ######################################################################################################
 #Сравнение двух изображений методом DFT
 
@@ -113,19 +126,56 @@ def Grad_correl(e,t):
 def Scale_correl(e,t):
     img1 = cv2.imread(e)
     img2 = cv2.imread(t)
+    # Перевод изображений в grayscale
+    gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
-    scale_down = 0.2
-    img2 = cv2.resize(img2, None, fx=scale_down, fy=scale_down, interpolation=cv2.INTER_LINEAR)
-    # Получение размеров изображений
-    height1, width1, _ = img1.shape
-    height2, width2, _ = img2.shape
 
-    # Вычисление отношения размеров изображений
-    scale_ratio = max(height1 / height2, width1 / width2) / min(height1 / height2, width1 / width2)
-
-    # Вычисление процентного соотношения масштаба двух изображений
-    scale_diff_percent = abs(scale_ratio - 1) *100
-    return  scale_diff_percent
+    # 4.
+    # Выполнить
+    # процедуру
+    # низкочастотной
+    # фильтрации
+    # канала
+    # вейвлет - преобразования:
+    #
+    # ```python
+    # Установить уровень декомпозиции
+    level = 3
+    # Выполнить вейвлет-преобразование над изображениями
+    coeffs1 = pywt.wavedec2(gray_img1, 'db2', mode='periodization', level=level)
+    coeffs2 = pywt.wavedec2(gray_img2, 'db2', mode='periodization', level=level)
+    # Установить порог для коэффициентов детализации
+    threshold = 30
+    # Применить низкочастотную фильтрацию
+    new_coeffs1 = list(coeffs1)
+    new_coeffs2 = list(coeffs2)
+    for i in range(1, level + 1):
+        # Применить порог над коэффициентами детализации
+        new_coeffs1[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs1[i]])
+        new_coeffs2[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs2[i]])
+    # Выполнить обратное вейвлет-преобразование
+    denoised_img1 = pywt.waverec2(new_coeffs1, 'db2', mode='periodization')
+    denoised_img2 = pywt.waverec2(new_coeffs2, 'db2', mode='periodization')
+    # ```
+    #
+    # 5.
+    # Вычислить
+    # PSNR(Peak
+    # Signal - to - Noise
+    # Ratio) для
+    # изображений:
+    #
+    # ```python
+    # Вычислить Mean Squared Error (MSE)
+    mse = np.mean((denoised_img1 - denoised_img2) ** 2)
+    # Вычислить PSNR
+    if mse == 0:
+        psnr = 100
+    else:
+        max_pixel = 255
+        psnr = 20 * np.log10(max_pixel / np.sqrt(mse))
+    return  100 - psnr
 
 #############################################################################################
 #чтение из файла и добаление в массивы эталонов и тестов
@@ -139,20 +189,24 @@ def read_Etalon_and_test(b):
 #############################################################################################
 #Срвнение всех методов
 def Finder(b):
+    k = 0
     read_Etalon_and_test(b)
-    for i in range(1,len(etalon)):
-        for j in range(1,11 - b):
-            result.append(round(Hist_correl(etalon[i],test[j]),1))
-            result.append(round(DFT_correl(etalon[i], test[j]),1))
-            result.append(round(DCT_correl(etalon[i], test[j]),1))
-            result.append(round(Grad_correl(etalon[i], test[j]),1))
-            result.append(round(Scale_correl(etalon[i], test[j]),1))
+    for i in range(len(etalon)):
+        for j in range(10 - b):
+            result.append(round(Hist_correl(etalon[i],test[j +k]),1))
+            result.append(round(DFT_correl(etalon[i], test[j +k]),1))
+            result.append(round(DCT_correl(etalon[i], test[j +k]),1))
+            result.append(round(Grad_correl(etalon[i], test[j +k]),1))
+            result.append(round(Scale_correl(etalon[i], test[j +k]),1))
+
+        k = 10 - b
+
     return result
 ####################################################
 #TEST
-# read_Etalon_and_test(1)
-# Finder(2)
-# print(len(result))
+#
+# result = Finder(1)
+# print(len(result)//5)
 # print(len(test))
 # print(len(etalon))
 #
@@ -162,7 +216,7 @@ def Finder(b):
 # print(DFT_correl(etalon[0],test[1]))
 # print(DCT_correl(etalon[1],test[3]))
 # print(Grad_correl(etalon[1],test[155]))
-# print(Scale_correl(etalon[1],etalon[4]))
+# print(Scale_correl(etalon[1],test[3]))
 
 
 
