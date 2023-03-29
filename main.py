@@ -1,21 +1,7 @@
 import cv2 as cv2
 import numpy as np
-from matplotlib.patches import Rectangle
-from matplotlib.patches import Circle
-from matplotlib import pyplot as plt
-import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-# from mtcnn.mtcnn import MTCNN
-import math
-import pandas as pd
-import os
-import pywt
-import sys
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
-# from hist import MainWindow
-# from w4 import Ui_MainWindow
-import sys
+
+
 import os
 ###########################################
 #чтение всех файлов
@@ -64,16 +50,6 @@ def DCT_correl(e,t):
     # Вычисление модуля спектра
     # mag1 = cv2.magnitude(dct1, dct1)
     # mag2 = cv2.magnitude(dct2, dct2)
-    # Вычислите
-    # коэффициент
-    # сходства
-    # двух
-    # изображений
-    # с
-    # помощью
-    # косинусного
-    # расстояния.
-    #
     from scipy.spatial.distance import cosine
 
     similarity_score = 1 - cosine(dct1.flatten(), dct2.flatten())
@@ -101,10 +77,10 @@ def DFT_correl(e,t):
     # вычисление меры расстояния
     dist = np.linalg.norm(dft1 - dft2)
 
-    # нормализация расстояния
+    #нормализация расстояния
     max_dist = np.sqrt(img1.shape[0] * img1.shape[1] * 2) * 255
     similarity = ((max_dist / dist)) * 100
-    return  100 -  similarity
+    return  100 - similarity
 ######################################################################################################
 #Сравнение двух изображений по градиенту
 def Grad_correl(e,t):
@@ -127,60 +103,19 @@ def Grad_correl(e,t):
 
     return result
 ######################################################################################################
-#Сравнение двух изображений по градиенту
+#Сравнение двух изображений по масштабу
 def Scale_correl(e,t):
-    img1 = cv2.imread(e)
-    img2 = cv2.imread(t)
-    # Перевод изображений в grayscale
-    gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-    gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+    from skimage import io, measure, transform,metrics
+    img1 = io.imread(e)
+    img2 = io.imread(t)
 
+    image1_resized = transform.resize(img1, (12, 14))
+    image2_resized = transform.resize(img2, (12, 14))
 
-    # 4.
-    # Выполнить
-    # процедуру
-    # низкочастотной
-    # фильтрации
-    # канала
-    # вейвлет - преобразования:
-    #
-    # ```python
-    # Установить уровень декомпозиции
-    level = 3
-    # Выполнить вейвлет-преобразование над изображениями
-    coeffs1 = pywt.wavedec2(gray_img1, 'db2', mode='periodization', level=level)
-    coeffs2 = pywt.wavedec2(gray_img2, 'db2', mode='periodization', level=level)
-    # Установить порог для коэффициентов детализации
-    threshold = 30
-    # Применить низкочастотную фильтрацию
-    new_coeffs1 = list(coeffs1)
-    new_coeffs2 = list(coeffs2)
-    for i in range(1, level + 1):
-        # Применить порог над коэффициентами детализации
-        new_coeffs1[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs1[i]])
-        new_coeffs2[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs2[i]])
-    # Выполнить обратное вейвлет-преобразование
-    denoised_img1 = pywt.waverec2(new_coeffs1, 'db2', mode='periodization')
-    denoised_img2 = pywt.waverec2(new_coeffs2, 'db2', mode='periodization')
-    # ```
-    #
-    # 5.
-    # Вычислить
-    # PSNR(Peak
-    # Signal - to - Noise
-    # Ratio) для
-    # изображений:
-    #
-    # ```python
-    # Вычислить Mean Squared Error (MSE)
-    mse = np.mean((denoised_img1 - denoised_img2) ** 2)
-    # Вычислить PSNR
-    if mse == 0:
-        psnr = 100
-    else:
-        max_pixel = 255
-        psnr = 20 * np.log10(max_pixel / np.sqrt(mse))
-    return  100 - psnr
+    # Сравнение двух изображений с использованием функции structural_similarity
+    ssim = metrics.structural_similarity(image1_resized, image2_resized, data_range= 255) * 100
+
+    return  ssim
 
 #############################################################################################
 #чтение из файла и добаление в массивы эталонов и тестов
@@ -210,18 +145,19 @@ def Finder(b):
 ####################################################
 #TEST
 #
-result = Finder(1)
+# read_Etalon_and_test(1)
+# result = Finder(1)
 # print(len(result)//5)
 # print(len(test))
 # print(len(etalon))
 #
 # print(test)
 # print(test)
-print(Hist_correl(etalon[1],test[1]))
+# print(Hist_correl(etalon[1],test[1]))
 # print(DFT_correl(etalon[0],test[1]))
 # print(DCT_correl(etalon[1],test[3]))
 # print(Grad_correl(etalon[1],test[155]))
-# print(Scale_correl(etalon[1],test[3]))
+# print(Scale_correl(etalon[1],test[20]))
 
 
 

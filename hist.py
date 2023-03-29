@@ -178,24 +178,18 @@ class MainWindow(QtWidgets.QMainWindow):
         # ax8.title.set_text(f'SCALE {self.result[self.step_hist + 4]}')
         ax8.set_xlabel(f'SCALE {self.result[self.step_hist + 4]}')
 
-        # img = cv.imread(img_path,cv.IMREAD_GRAYSCALE)
         img = cv.imread(img_path)
-        gray_img2 = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-        level = 3
-        # Выполнить вейвлет-преобразование над изображениями
+        mg1_resized = cv.resize(img, (14, 12))
 
-        coeffs2 = pywt.wavedec2(gray_img2, 'db2', mode='periodization', level=level)
-        # Установить порог для коэффициентов детализации
-        threshold = 80
-        # Применить низкочастотную фильтрацию
-        new_coeffs2 = list(coeffs2)
-        for i in range(1, level + 1):
-            # Применить порог над коэффициентами детализации
-
-            new_coeffs2[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs2[i]])
-        # Выполнить обратное вейвлет-преобразование
-        denoised_img1 = pywt.waverec2(new_coeffs2, 'db2', mode='periodization')
+        # gray_img2 = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        # level = 3
+        # coeffs2 = pywt.wavedec2(gray_img2, 'db2', mode='periodization', level=level)
+        # threshold = 80
+        # new_coeffs2 = list(coeffs2)
+        # for i in range(1, level + 1):
+        #     new_coeffs2[i] = tuple([np.where(np.abs(detail) < threshold, 0, detail) for detail in coeffs2[i]])
+        # denoised_img1 = pywt.waverec2(new_coeffs2, 'db2', mode='periodization')
 
 
 
@@ -217,7 +211,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #     new_coeffs[i] = tuple([coeffs[i][j][:new_height, :new_width] for j in range(len(coeffs[i]))])
         # # Выполнить обратное вейвлет-преобразование
         # resized_img = pywt.waverec2(new_coeffs, 'db2', mode='periodization')
-        ax8.imshow(denoised_img1)
+        ax8.imshow(mg1_resized)
         #########################################################################################################################
         ax7 = self.canvas.figure.add_subplot(313)
         ax7.title.set_text('График определения лица по Гистограмме')
@@ -287,11 +281,11 @@ class MainWindow(QtWidgets.QMainWindow):
         e_etalon = []
         i = 0
         e = 0
-        step_dft = 0
+        step_dft = 1
         step_hist = 0
-        step_grad = 0
-        step_dct = 0
-        step_scl = 0
+        step_grad = 3
+        step_dct = 2
+        step_scl = 4
 
         for i in range(len(self.result)//5 - 5):
             y_data.append(self.result[step_hist])
@@ -306,7 +300,9 @@ class MainWindow(QtWidgets.QMainWindow):
             step_grad = step_grad + 5
             step_dct = step_dct + 5
             step_scl = step_scl + 5
-            i = i + 1
+
+            if( i % 5 == 0):
+                i = i + 1
             if (i % (9 - self.b) == 0):
                 e = e + 1
 
