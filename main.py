@@ -132,12 +132,13 @@ def Finder(b):
     k = 0
     read_Etalon_and_test(b)
     for i in range(len(etalon)):
-        for j in range(10 - b):
-            result.append(round(Hist_correl(etalon[i],test[j +k]),1))
-            result.append(round(DFT_correl(etalon[i], test[j +k]),1))
-            result.append(round(DCT_correl(etalon[i], test[j +k]),1))
-            result.append(round(Grad_correl(etalon[i], test[j +k]),1))
-            result.append(round(Scale_correl(etalon[i], test[j +k]),1))
+        for l in range(b):
+            for j in range(10 - b):
+                result.append(round(Hist_correl(etalon[i],test[j +k]),1))
+                result.append(round(DFT_correl(etalon[i], test[j +k]),1))
+                result.append(round(DCT_correl(etalon[i], test[j +k]),1))
+                result.append(round(Grad_correl(etalon[i], test[j +k]),1))
+                result.append(round(Scale_correl(etalon[i], test[j +k]),1))
 
         k = 10 - b
 
@@ -146,7 +147,7 @@ def Finder(b):
 #TEST
 #
 # read_Etalon_and_test(1)
-# result = Finder(1)
+# result = Finder(2)
 # print(len(result)//5)
 # print(len(test))
 # print(len(etalon))
