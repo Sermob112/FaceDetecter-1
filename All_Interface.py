@@ -15,12 +15,12 @@ import pywt
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import main
+from methods import *
 from PyQt5.QtWidgets import*
 from random import randint
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QFont
-
+from Dct_interface import Window_DCT
 but_stat = True
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -50,8 +50,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.final_avg = []
         self.b = QInputDialog.getText(self, 'Введите число', 'Введите количество эталонных изображений:')
 
-        self.b = int(self.b[0])
-        self.result = main.Finder(self.b)
+        # self.b = int(self.b[0])
+        # self.result = Finder(self.b)
 
         self.setWindowTitle("Процент точности системы")
         central_widget = QtWidgets.QWidget(self)
@@ -68,29 +68,39 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button = QtWidgets.QPushButton("Остановить")
         self.button2 = QtWidgets.QPushButton("Результаты")
 
+        self.button_hist = QtWidgets.QPushButton("Гистограмма")
+        self.button_DCT = QtWidgets.QPushButton("DCT")
+        self.button_DFT = QtWidgets.QPushButton("DFT")
+        self.button_Sclae = QtWidgets.QPushButton("Scale")
+        self.button_grad = QtWidgets.QPushButton("Градиент")
+
         self.vertical_layout.addWidget(self.button)
         self.vertical_layout.addWidget(self.button2)
+        self.vertical_layout.addWidget(self.button_hist)
+        self.vertical_layout.addWidget(self.button_DCT)
+        self.vertical_layout.addWidget(self.button_DFT)
+        self.vertical_layout.addWidget(self.button_Sclae)
+        self.vertical_layout.addWidget(self.button_grad)
+
+        self.window_dct = Window_DCT()
+        self.button_DCT.clicked.connect(self.open_Dct)
+
         figure = self.canvas.figure
         figure.text(1, 1, "Надпись", color='red', ha="right", va="bottom")
         self.setCentralWidget(central_widget)
         self.button.clicked.connect(self.Stop)
         self.button2.clicked.connect(self.FinalResult)
 
-    # def update_figure(self):
-
-        # ax = self.canvas.figure.add_subplot()
-        # # Очистите текущий график и нарисуйте новый
-        # ax.clear()
-        # ax.plot([1, 2, 3, 4], [1, 4, 2, 3])
-        # ax.set_title("Updated Plot")
-        # # Обновите FigureCanvas
-        # self.canvas.draw()
-        # self.canvas.clear()
+    def get_result(self, result):
+        self.result = result
+        self.window_dct.get_all(test, self.result)
+    def open_Dct(self):
+        self.window_dct.show()
     def load_image(self):
         for l in range(self.b):
             self.canvas.figure.clear()
-            img_path = main.test[self.i + self.k]
-            et_path = main.etalon[self.e]
+            img_path = test[self.i + self.k]
+            et_path = etalon[self.e]
 
             img = cv.imread(img_path)
             ####################################################################
@@ -262,7 +272,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 
-            ax7.plot(self.i,self.result[self.i])
+            # ax7.plot(self.i,self.result[self.i])
             self.canvas.draw()
             self.i = self.i + 1
             self.all_test = self.all_test + 1
@@ -317,14 +327,13 @@ class MainWindow(QtWidgets.QMainWindow):
             step_scl = step_scl + 5
             if (i % (10 - self.b) == 0):
                 e = e + 1
-        for c in range(len(main.etalon)):
+        for c in range(len(etalon)):
             for l in range(self.b):
                 for h in range(10 - self.b):
                     i_test.append(h + k)
             k = k + 10 - self.b
 
-        print(len(i_test))
-        print(len(e_etalon))
+
 
         data= {
             'Гистограмма': y_data,
@@ -347,16 +356,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.timer.start(100)
             self.but_stat = True
 
-
-
-
-
-
-
-
-#
-app = QtWidgets.QApplication([])
-window = MainWindow()
-window.show()
-app.exec_()
-
+# app = QtWidgets.QApplication([])
+# window = MainWindow()
+# window.show()
+# app.exec_()

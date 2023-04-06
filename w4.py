@@ -12,7 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5 import QtCore, QtGui, QtWidgets
 from matplotlib.figure import Figure
 from PyQt5.QtCore import QTimer
-from main import *
+from methods import *
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         self.i = 0

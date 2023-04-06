@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from random import randint
 import pandas as pd
-import main
+import methods
 data = {'Имя': ['Иван', 'Наташа', 'Петр', 'Олег'],
         'Возраст': [23, 32, 45, 19],
         'Город': ['Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург']}
