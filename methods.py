@@ -15,7 +15,7 @@ i = 1
 ######################################################################################################
 #Сравнение двух гистограмм
 
-def Hist_correl(e,t):
+def hist_correl(e,t):
 
     img1 = cv2.imread(e)
     img2 = cv2.imread(t)
@@ -36,7 +36,7 @@ def Hist_correl(e,t):
 ######################################################################################################
 #Сравнение двух изображений методом DCT
 
-def DCT_correl(e,t):
+def dct_correl(e,t):
     img1 = cv2.imread(e, 0)
     img2 = cv2.imread(t, 0)
 
@@ -62,7 +62,7 @@ def DCT_correl(e,t):
 ######################################################################################################
 #Сравнение двух изображений методом DFT
 
-def DFT_correl(e,t):
+def dft_correl(e,t):
 
     # Загрузите два изображения
     img1 = cv2.imread(e,0)
@@ -79,28 +79,35 @@ def DFT_correl(e,t):
     return  100 - similarity
 ######################################################################################################
 #Сравнение двух изображений по градиенту
-def Grad_correl(e,t):
-    img1 = cv2.imread(e,0)
-    img2 = cv2.imread(t,0)
+def grad_correl(e,t):
+    img1 = cv2.imread(e)
+    img2 = cv2.imread(t)
 
+    gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
-    # вычисление гистограмм градиентов
-    hist1 = cv2.calcHist([cv2.Canny(img1, 0, 255)], [0], None, [256], [0, 256])
-    hist2 = cv2.calcHist([cv2.Canny(img2, 0, 255)], [0], None, [256], [0, 256])
+    grad_x1 = cv2.Sobel(gray1, cv2.CV_64F, 1, 0, ksize=3)
+    grad_y1 = cv2.Sobel(gray1, cv2.CV_64F, 0, 1, ksize=3)
+    grad_mag1 = cv2.magnitude(grad_x1, grad_y1)
 
-    # нормализация гистограмм
-    # hist1 = cv2.normalize(hist1, hist1, norm_type=cv2.NORM_L1)
-    # hist2 = cv2.normalize(hist2, hist2, norm_type=cv2.NORM_L1)
+    grad_x2 = cv2.Sobel(gray2, cv2.CV_64F, 1, 0, ksize=3)
+    grad_y2 = cv2.Sobel(gray2, cv2.CV_64F, 0, 1, ksize=3)
+    grad_mag2 = cv2.magnitude(grad_x2, grad_y2)
 
-    result = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL) * 100
+    # Calculate the mean of the gradient magnitude of each image
+    mean_grad_mag1 = cv2.mean(grad_mag1)[0]
+    mean_grad_mag2 = cv2.mean(grad_mag2)[0]
 
-    # Вычисление процентного соотношения разности модулей градиента двух изображений
-    # diff_percent = np.sum(diff) / np.sum(mag1) * 100
+    # Compare the mean of the gradient magnitude of each image and output the result as a percentage
+    if mean_grad_mag1 > mean_grad_mag2:
+        similarity = mean_grad_mag2 / mean_grad_mag1 * 100
+    else:
+        similarity = mean_grad_mag1 / mean_grad_mag2 * 100
 
-    return result
+    return similarity
 ######################################################################################################
 #Сравнение двух изображений по масштабу
-def Scale_correl(e,t):
+def scale_correl(e,t):
     from skimage import io, measure, transform,metrics
     img1 = io.imread(e)
     img2 = io.imread(t)
@@ -130,11 +137,11 @@ def Finder(b):
     for i in range(len(etalon)):
         for l in range(b):
             for j in range(10 - b):
-                result.append(round(Hist_correl(etalon[i],test[j +k]),1))
-                result.append(round(DFT_correl(etalon[i], test[j +k]),1))
-                result.append(round(DCT_correl(etalon[i], test[j +k]),1))
-                result.append(round(Grad_correl(etalon[i], test[j +k]),1))
-                result.append(round(Scale_correl(etalon[i], test[j +k]),1))
+                result.append(round(hist_correl(etalon[i],test[j +k]),1))
+                result.append(round(dft_correl(etalon[i], test[j +k]),1))
+                result.append(round(dct_correl(etalon[i], test[j +k]),1))
+                result.append(round(grad_correl(etalon[i], test[j +k]),1))
+                result.append(round(scale_correl(etalon[i], test[j +k]),1))
 
         k = 10 - b
 
@@ -175,17 +182,35 @@ def select_files(n = 10, k = 1):
 
 
 hist_result = []
-def final_validation(k, n):
+dct_result = []
+dft_result = []
+grad_result = []
+scale_result = []
+def final_validation(k = 10, n = 2):
     select_files(k, n)
-    print(len(standards))
-    print(len(tests))
+    v = 0
+    h = 0
     for i in range(len(standards)):
         for k in range(10 - n):
-            hist_result.append(Hist_correl(standards[i],tests[k]))
+            hist_result.append(round(hist_correl(standards[i],tests[k + v]),0))
+            dct_result.append(round(dct_correl(standards[i], tests[k + v]), 0))
+            dft_result.append(round(dft_correl(standards[i], tests[k + v]), 0))
+            grad_result.append(round(grad_correl(standards[i], tests[k + v]), 0))
+            scale_result.append(round(scale_correl(standards[i], tests[k + v]), 0))
 
 
-final_validation(10,4)
-print(len(hist_result))
+def result_Hist():
+    return hist_result
+def result_DCT():
+    return hist_result
+def result_():
+    return hist_result
+def result_Hist():
+    return hist_result
+def result_Hist():
+    return hist_result
+# final_validation(10,2)
+# print(len(hist_result))
 
 
 ###################################################################################################

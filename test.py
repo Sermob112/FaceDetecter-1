@@ -17,3 +17,4 @@ df = pd.DataFrame(data)
 
 # Сохраняем датафрейм в виде таблицы Excel
 df.to_excel('мой_файл.xlsx', index=False)
+print(0 % 12)
