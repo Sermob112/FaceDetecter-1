@@ -23,7 +23,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QFont
 
 but_stat = True
-class Window_DCT(QtWidgets.QMainWindow):
+class Window_CORR(QtWidgets.QMainWindow):
 
     def __init__(self, tests,dct_result ):
         super().__init__()
@@ -40,7 +40,7 @@ class Window_DCT(QtWidgets.QMainWindow):
         self.y_data = []
         self.avg = []
         self.final_avg = []
-        self.setWindowTitle("Процент точности DCT")
+        self.setWindowTitle("Процент точности градиента")
         central_widget = QtWidgets.QWidget(self)
         self.vertical_layout = QtWidgets.QVBoxLayout(central_widget)
         self.canvas = FigureCanvas(Figure(figsize=(15, 15)))
@@ -81,17 +81,17 @@ class Window_DCT(QtWidgets.QMainWindow):
 
 
         ax2 = self.canvas.figure.add_subplot(111)
-        ax2.title.set_text('График определения лица по DCT')
+        ax2.title.set_text('График определения лица Градиент')
         self.x_data.append(self.i)
         self.y_data.append(self.dct_result[self.i])
         ax2.axes.clear()
-        ax2.axes.plot(self.x_data, self.y_data, color='y', label='DCT')
+        ax2.axes.plot(self.x_data, self.y_data, color='y', label='Grad')
         ax2.legend()
         ax2.set_xlabel('Номер тестового изображения')
         ax2.set_ylabel('Проценты')
         self.avg.append(self.dct_result[self.i])
         self.final_avg.append(sum(self.avg)/len(self.avg))
-        self.lable.setText(f'текущая точность распознавания лица методом dct: {round(self.final_avg[self.i], 1)} %')
+        self.lable.setText(f'текущая точность распознавания лица методом сравнения гистограмм градиента: {round(self.final_avg[self.i], 1)} %')
         self.canvas.draw()
         self.i = self.i + 1
 

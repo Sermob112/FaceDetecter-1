@@ -21,6 +21,10 @@ from random import randint
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QFont
 from Dct_interface import Window_DCT
+from dft_interface import Window_DFT
+from hist_interface import Window_HIST
+from corr_interface import Window_CORR
+from size_interface import Window_Scale
 but_stat = True
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -55,13 +59,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         final_validation(self.d, self.b)
-
-        # self.hist_result = hist_result
-        # self.dct_result = dct_result
-        # self.dft_result = dft_result
-        # self.grad_result = []
-        # self.scale_result = []
-
         self.setWindowTitle("Процент точности системы")
         central_widget = QtWidgets.QWidget(self)
         self.vertical_layout = QtWidgets.QVBoxLayout(central_widget)
@@ -91,8 +88,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.vertical_layout.addWidget(self.button_Sclae)
         self.vertical_layout.addWidget(self.button_grad)
 
-        # self.window_dct = Window_DCT()
-        # self.button_DCT.clicked.connect(self.open_Dct)
+
+        self.button_DCT.clicked.connect(self.open_Dct)
+        self.button_DFT.clicked.connect(self.open_dft)
+        self.button_hist.clicked.connect(self.open_hist)
+        self.button_grad.clicked.connect(self.open_corr)
+        self.button_Sclae.clicked.connect(self.open_size)
 
         figure = self.canvas.figure
         figure.text(1, 1, "Надпись", color='red', ha="right", va="bottom")
@@ -100,8 +101,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button.clicked.connect(self.Stop)
         self.button2.clicked.connect(self.FinalResult)
 
-    # def open_Dct(self):
-    #     self.window_dct.show()
+    def open_Dct(self):
+        self.window_dct = Window_DCT(tests, dct_result)
+        self.window_dct.show()
+    def open_dft(self):
+        self.window_dft = Window_DFT(tests, dft_result)
+        self.window_dft.show()
+    def open_hist(self):
+        self.window_hist = Window_HIST(tests, hist_result)
+        self.window_hist.show()
+    def open_corr(self):
+        self.window_corr = Window_CORR(tests, grad_result)
+        self.window_corr.show()
+
+    def open_size(self):
+        self.window_size = Window_Scale(tests, scale_result)
+        self.window_size.show()
+
+
     def load_image(self):
         for l in range(self.b):
             try:

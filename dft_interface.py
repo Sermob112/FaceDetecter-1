@@ -23,16 +23,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QFont
 
 but_stat = True
-class Window_DCT(QtWidgets.QMainWindow):
+class Window_DFT(QtWidgets.QMainWindow):
 
-    def __init__(self, tests,dct_result ):
+    def __init__(self, tests, dft_result ):
         super().__init__()
         self.i = 0
         self.e = 0
         self.k = 0
         self.step_dct = 2
         self.tests = tests
-        self.dct_result = dct_result
+        self.dct_result = dft_result
         self.but_stat = True
         self.b = 0
 
@@ -40,7 +40,7 @@ class Window_DCT(QtWidgets.QMainWindow):
         self.y_data = []
         self.avg = []
         self.final_avg = []
-        self.setWindowTitle("Процент точности DCT")
+        self.setWindowTitle("Процент точности DFT")
         central_widget = QtWidgets.QWidget(self)
         self.vertical_layout = QtWidgets.QVBoxLayout(central_widget)
         self.canvas = FigureCanvas(Figure(figsize=(15, 15)))
@@ -62,9 +62,6 @@ class Window_DCT(QtWidgets.QMainWindow):
         self.setCentralWidget(central_widget)
         self.button.clicked.connect(self.Stop)
 
-    def get_all(self,tests, dct_result):
-        self.tests = tests
-        self.dct_result = dct_result
     def load_image(self):
         self.canvas.figure.clear()
         # img_path = self.tests[self.i]
@@ -81,17 +78,17 @@ class Window_DCT(QtWidgets.QMainWindow):
 
 
         ax2 = self.canvas.figure.add_subplot(111)
-        ax2.title.set_text('График определения лица по DCT')
+        ax2.title.set_text('График определения лица по DFT')
         self.x_data.append(self.i)
         self.y_data.append(self.dct_result[self.i])
         ax2.axes.clear()
-        ax2.axes.plot(self.x_data, self.y_data, color='y', label='DCT')
+        ax2.axes.plot(self.x_data, self.y_data, color='y', label='DFT')
         ax2.legend()
         ax2.set_xlabel('Номер тестового изображения')
         ax2.set_ylabel('Проценты')
         self.avg.append(self.dct_result[self.i])
         self.final_avg.append(sum(self.avg)/len(self.avg))
-        self.lable.setText(f'текущая точность распознавания лица методом dct: {round(self.final_avg[self.i], 1)} %')
+        self.lable.setText(f'текущая точность распознавания лица методом dft: {round(self.final_avg[self.i], 1)} %')
         self.canvas.draw()
         self.i = self.i + 1
 
