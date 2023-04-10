@@ -20,20 +20,26 @@ def hist_correl(e,t):
 
     img1 = cv2.imread(e)
     img2 = cv2.imread(t)
-    gray_img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-    gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-    hist1 = cv2.calcHist([gray_img1], [0], None, [256], [0, 256])
-    hist2 = cv2.calcHist([gray_img2], [0], None, [256], [0, 256])
-    # Нормализация гистограмм
-    cv2.normalize(hist1, hist1, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(hist2, hist2, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+    # Вычисление гистограмм
+    hist1 = cv2.calcHist([img1], [0], None, [256], [0, 256])
+    hist2 = cv2.calcHist([img2], [0], None, [256], [0, 256])
 
+    # Нормализация гистограмм
+    cv2.normalize(hist1, hist1, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(hist2, hist2, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+
+    delt_h = abs(hist1 - hist2)
+    g = np.array(delt_h)
+    percent_diff = 100 - (np.sum(g) / np.prod(g.shape) * 100)
     # Сравнение гистограмм
-    score = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
 
     match = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL) * 100
+
+    delt_h = abs(hist1 - hist2)
     percentage = round((match + 1) * 50,1)
-    return match
+
+
+    return percent_diff
 ######################################################################################################
 #Сравнение двух изображений методом DCT
 
@@ -87,19 +93,20 @@ def grad_correl(e,t):
     gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
-    grad_x1 = cv2.Sobel(gray1, cv2.CV_64F, 1, 0, ksize=3)
-    grad_y1 = cv2.Sobel(gray1, cv2.CV_64F, 0, 1, ksize=3)
+    grad_x1 = cv2.Sobel(gray1, cv2.CV_32F, 1, 0, ksize=3)
+    grad_y1 = cv2.Sobel(gray1, cv2.CV_32F, 0, 1, ksize=3)
+    #величина градиента
     grad_mag1 = cv2.magnitude(grad_x1, grad_y1)
 
-    grad_x2 = cv2.Sobel(gray2, cv2.CV_64F, 1, 0, ksize=3)
-    grad_y2 = cv2.Sobel(gray2, cv2.CV_64F, 0, 1, ksize=3)
+    grad_x2 = cv2.Sobel(gray2, cv2.CV_32F, 1, 0, ksize=3)
+    grad_y2 = cv2.Sobel(gray2, cv2.CV_32F, 0, 1, ksize=3)
+    # величина градиента
     grad_mag2 = cv2.magnitude(grad_x2, grad_y2)
 
-    # Calculate the mean of the gradient magnitude of each image
+
     mean_grad_mag1 = cv2.mean(grad_mag1)[0]
     mean_grad_mag2 = cv2.mean(grad_mag2)[0]
 
-    # Compare the mean of the gradient magnitude of each image and output the result as a percentage
     if mean_grad_mag1 > mean_grad_mag2:
         similarity = mean_grad_mag2 / mean_grad_mag1 * 100
     else:
@@ -142,7 +149,7 @@ def Finder(b):
                 result.append(round(dft_correl(etalon[i], test[j +k]),1))
                 result.append(round(dct_correl(etalon[i], test[j +k]),1))
                 result.append(round(grad_correl(etalon[i], test[j +k]),1))
-                result.append(round(scale_correl(etalon[i], test[j +k]),1))
+                result.append(round(scale_correl(etalon[i], test[j +k]),4))
 
         k = 10 - b
 
@@ -191,13 +198,24 @@ def final_validation(k = 10, n = 2):
     select_files(k, n)
     v = 0
     h = 0
-    for i in range(len(standards)):
+    for i in range(1, len(standards)):
         for k in range(10 - n):
             hist_result.append(round(hist_correl(standards[i],tests[k + v]),0))
             dct_result.append(round(dct_correl(standards[i], tests[k + v]), 0))
             dft_result.append(round(dft_correl(standards[i], tests[k + v]), 0))
             grad_result.append(round(grad_correl(standards[i], tests[k + v]), 0))
-            scale_result.append(round(scale_correl(standards[i], tests[k + v]), 0))
+            scale_result.append(round(scale_correl(standards[i], tests[k + v]), 4))
+        h = h + 1
+        if (h == n):
+            v = v + (10 - n)
+            h = 0
+
+
+
+
+
+
+
 
 
 def result_Hist():
@@ -272,9 +290,10 @@ from itertools import product
 # print(len(test))
 # print(len(etalon))
 #
+# final_validation()
 # print(test)
 # print(etalon)
-# print(Hist_correl(etalon[1],test[1]))
+# print(hist_correl(standards[1],tests[1]))
 # print(DFT_correl(etalon[0],test[1]))
 # print(DCT_correl(etalon[1],test[3]))
 # print(Grad_correl(etalon[1],test[155]))

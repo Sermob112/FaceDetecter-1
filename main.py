@@ -10,9 +10,7 @@ from methods import Finder
 def application():
     app = QtWidgets.QApplication([])
     window = MainWindow()
-    # window.b = int(window.b[0])
-    # result = Finder(window.b)
-    # window.get_result(result)2
+
     window.show()
     app.exec_()
 

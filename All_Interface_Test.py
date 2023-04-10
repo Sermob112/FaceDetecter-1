@@ -66,7 +66,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.vertical_layout.addWidget(self.canvas)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.load_image)
-        self.timer.start(100)
+        self.timer.start(1000)
         self.lable = QtWidgets.QLabel(f'0')
         self.lable.setAlignment(Qt.AlignHCenter)
         self.lable.setFont(QFont('Times', 16))
@@ -148,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # #########################################################################################################################
                 # #Гистограмма
                 ax2 = self.canvas.figure.add_subplot(443)
-                ax2.title.set_text(f'Гистограмма {hist_result[self.i]}% ')
+                ax2.title.set_text(f'Гистограмма {hist_result[self.all_test]}% ')
                 img2 = cv.imread(et_path)
                 colors = ('b', 'g', 'r')
                 for i, col in enumerate(colors):
@@ -172,7 +172,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 # Отображение изображения с градиентом
                 ax3 = self.canvas.figure.add_subplot(444)
-                ax3.title.set_text(f'Градиент {grad_result[self.i]}')
+                ax3.title.set_text(f'Градиент {grad_result[self.all_test]}')
                 ax3.imshow(grad)
                 #
                 # ####################################################################
@@ -185,7 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 #
                 # # Отображение результатов
                 # ax4.title.set_text(f'DCT {self.result[self.step_hist + 2]}')
-                ax4.set_xlabel(f'DCT {dct_result[self.i]}')
+                ax4.set_xlabel(f'DCT {dct_result[self.all_test]}')
                 ax4.imshow(imgcv1)
                 #
                 #
@@ -204,7 +204,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # #########################################################################################################################
                 # # SCALE
                 ax8 = self.canvas.figure.add_subplot(447)
-                ax8.set_xlabel(f'SCALE {scale_result[self.i]}')
+                ax8.set_xlabel(f'SCALE {scale_result[self.all_test]}')
 
                 img = cv.imread(img_path)
 
@@ -216,11 +216,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 ax7.title.set_text('График определения лица по Гистограмме')
 
                 self.x_data.append(self.all_test)
-                self.y_data.append(hist_result[self.i])
-                self.y_data_dft.append(dft_result[self.i])
-                self.y_data_grad.append(grad_result[self.i])
-                self.y_data_dct.append(dct_result[self.i])
-                self.y_data_scl.append(scale_result[self.i])
+                self.y_data.append(hist_result[self.all_test])
+                self.y_data_dft.append(dft_result[self.all_test])
+                self.y_data_grad.append(grad_result[self.all_test])
+                self.y_data_dct.append(dct_result[self.all_test])
+                self.y_data_scl.append(scale_result[self.all_test])
                 ax7.axes.clear()
                 ax7.axes.plot(self.x_data, self.y_data,color='r', label='Hist')
                 ax7.axes.plot(self.x_data, self.y_data_dft,color='b', label='DFT')
@@ -228,7 +228,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 ax7.axes.plot(self.x_data, self.y_data_dct, color='y', label='DCT')
                 ax7.axes.plot(self.x_data, self.y_data_scl, color='c', label='SCL')
                 ax7.legend()
-                ax7.set_xlabel('Номер тестового изображения')
+                ax7.set_xlabel('Номер теста')
                 ax7.set_ylabel('Проценты')
                 #
                 self.avg.append((hist_result[self.i] + dft_result[self.i] + grad_result[self.i] + dct_result[self.i] + scale_result[self.i])/5)
@@ -322,7 +322,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.timer.stop()
             self.but_stat = False
         else:
-            self.timer.start(100)
+            self.timer.start(1000)
             self.but_stat = True
 
 # app = QtWidgets.QApplication([])

@@ -54,7 +54,8 @@ class Window_Scale(QtWidgets.QMainWindow):
         self.vertical_layout.addWidget(self.lable)
         self.button = QtWidgets.QPushButton("Остановить")
         self.vertical_layout.addWidget(self.button)
-
+        for i in range(len(self.dct_result)):
+            self.x_data.append(i)
 
 
         figure = self.canvas.figure
@@ -82,16 +83,16 @@ class Window_Scale(QtWidgets.QMainWindow):
 
         ax2 = self.canvas.figure.add_subplot(111)
         ax2.title.set_text('График определения лица по SCALE')
-        self.x_data.append(self.i)
+        # self.x_data.append(self.i)
         self.y_data.append(self.dct_result[self.i])
         ax2.axes.clear()
-        ax2.axes.plot(self.x_data, self.y_data, color='y', label='SCALE')
+        ax2.axes.plot(self.x_data, self.dct_result, color='r', label='SCALE')
         ax2.legend()
-        ax2.set_xlabel('Номер тестового изображения')
+        ax2.set_xlabel('Номер теста')
         ax2.set_ylabel('Проценты')
         self.avg.append(self.dct_result[self.i])
-        self.final_avg.append(sum(self.avg)/len(self.avg))
-        self.lable.setText(f'текущая точность распознавания лица методом сравения структурных элементов двух изображений: {round(self.final_avg[self.i], 1)} %')
+        result = (sum(self.dct_result) / len(self.dct_result))
+        self.lable.setText(f'точность распознавания лица методом SCALE: {round(result, 5)} %')
         self.canvas.draw()
         self.i = self.i + 1
 
