@@ -40,30 +40,41 @@ def select_files(n = 200):
     return standards
 # print(len(select_files()))
 
-result = []
+
 
 # print(hist_correl(standards[0], standards[1]))
-def find_scene():
+def find_scene(standarts):
     j = 1
     data = {}
     for i in standards:
         try:
-            result.append(hist_correl(i,standards[j]))
+
             data[hist_correl(i,standards[j])] = {i:standards[j]}
             j= j+ 1
         except Exception:
             data[hist_correl(i,standards[len(standards)-1])] = {i:standards[len(standards)-1]}
     return data
+
+def scene_result():
+    j = 1
+    result = []
+    for i in standards:
+        try:
+            result.append(hist_correl(i,standards[j]))
+            j= j+ 1
+        except Exception:
+            result.append(hist_correl(i,standards[len(standards)-1]))
+    return result
 #Кадры изменения сцены 103 172 283
 
-def scene_dect():
+def scene_dect(scene):
     scene_result = {}
-    for proc, pics in find_scene().items():
+    for proc, pics in scene.items():
         if proc > 10:
-            scene_result[proc] = pics
+            scene_result[f"Процент {proc}"] = f"номера кадров: {pics}"
     return scene_result
 
-print(len(scene_dect()))
-print(scene_dect())
+# print(len(scene_dect()))
+# print(scene_dect())
 
 

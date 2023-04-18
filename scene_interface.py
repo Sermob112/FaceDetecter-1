@@ -9,16 +9,18 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QFont
 from scene_decter import *
 but_stat = True
+import json
 class Window_DCT(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.i = 0
         self.e = 1
+        self.moment = 1
         self.but_stat = True
         self.b = 0
-        select_files(500)
-        self.data_proc = find_scene()
+        self.standarts = select_files(500)
+        self.data_proc = scene_result()
 
         self.x_data = []
         self.y_data = []
@@ -36,15 +38,23 @@ class Window_DCT(QtWidgets.QMainWindow):
         self.lable.setAlignment(Qt.AlignHCenter)
         self.lable.setFont(QFont('Times', 16))
         self.vertical_layout.addWidget(self.lable)
+
+        self.lable2 = QtWidgets.QLabel(f'Количество моментов изменения сцены')
+        self.lable2.setAlignment(Qt.AlignHCenter)
+        self.lable2.setFont(QFont('Times', 16))
+        self.vertical_layout.addWidget(self.lable2)
+
         self.button = QtWidgets.QPushButton("Остановить")
         self.vertical_layout.addWidget(self.button)
-
+        self.button_result = QtWidgets.QPushButton("результаты")
+        self.vertical_layout.addWidget(self.button_result)
 
 
         figure = self.canvas.figure
         figure.text(1, 1, "Надпись", color='red', ha="right", va="bottom")
         self.setCentralWidget(central_widget)
         self.button.clicked.connect(self.Stop)
+        self.button_result.clicked.connect(self.result_of_scene)
 
 
     def load_image(self):
@@ -70,7 +80,8 @@ class Window_DCT(QtWidgets.QMainWindow):
 
             ax2.imshow(cv.cvtColor(img_et, cv.COLOR_BGR2RGB))
             #Гистограмма
-            ax3 = self.canvas.figure.add_subplot(212)
+            # ax3 = self.canvas.figure.add_subplot(212)
+            ax3 = self.canvas.figure.add_subplot(223)
             ax3.title.set_text(f'Гистограмма яркости% ')
             img2 = cv.imread(et_path)
             # colors = ('b', 'g', 'r')
@@ -83,8 +94,15 @@ class Window_DCT(QtWidgets.QMainWindow):
             ax3.set_xlim([0, 256])
             # ax3.set_ylabel('Проценты')
 
+            ax4 = self.canvas.figure.add_subplot(224)
+            ax4.title.set_text(f'График кадров ')
+            self.x_data.append(self.i)
+            self.y_data.append(self.data_proc[self.i])
+            ax4.plot(self.x_data,self.y_data , color='b', label='Текущий кадр')
 
-
+            ax4.legend()
+            ax4.set_ylabel('Проценты')
+            ax4.set_xlabel('Номер кадра')
             # ax2 = self.canvas.figure.add_subplot(111)
             # ax2.title.set_text('График определения лица по DCT')
             # self.x_data.append(self.i)
@@ -96,12 +114,17 @@ class Window_DCT(QtWidgets.QMainWindow):
             # ax2.set_ylabel('Проценты')
             # self.avg.append(self.dct_result[self.i])
             # self.final_avg.append(sum(self.avg)/len(self.avg))
-            self.lable.setText(f'текущая разность гистограммы яркости в % : {self.data_proc[self.i]} %')
+            self.lable.setText(f'текущая разность гистограмм яркости двух кадров : {self.data_proc[self.i]} %')
+            if self.data_proc[self.i] > 5:
+                self.lable2.setText(f'Колиество моментов изменений сцены: {self.moment}')
+                self.moment = self.moment + 1
             self.canvas.draw()
             self.i = self.i + 1
             self.e = self.e + 1
+
         except Exception:
             self.e = len(standards)
+            self.but_stat = False
 
     def Stop(self):
         if(self.but_stat == True):
@@ -110,7 +133,10 @@ class Window_DCT(QtWidgets.QMainWindow):
         else:
             self.timer.start(100)
             self.but_stat = True
-
+    def result_of_scene(self):
+        scene = find_scene(self.standarts)
+        with open(f"Result.json", "a", encoding="utf-8") as file:
+            json.dump(scene_dect(scene), file, indent=4, ensure_ascii=False)
 app = QtWidgets.QApplication([])
 window = Window_DCT()
 window.show()
