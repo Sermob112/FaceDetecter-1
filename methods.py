@@ -1,6 +1,5 @@
 import cv2 as cv2
 import numpy as np
-import fawkes as fw
 
 import os
 ###########################################
@@ -214,9 +213,7 @@ def result_Hist():
 
 # final_validation(10,2)
 # print(len(hist_result))
-import fawkes
-from fawkes.utils import clip_img
-from PIL import Image
+
 
 
 # fawkes.Fawkes('matching.jpg', gpu= 1, batch_size=1,mode="low", format= 'png')
@@ -228,9 +225,7 @@ from PIL import Image
 # pprotected_img = fawkes.shield(img)
 # pprotected_img.save('test.jpg')
 ###################################################################################################
-from sklearn.model_selection import KFold
-from sklearn.metrics import accuracy_score
-from itertools import product
+
 # test_for_cross()
 #
 # etalon_train= []
